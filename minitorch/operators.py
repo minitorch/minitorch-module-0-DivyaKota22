@@ -1,7 +1,7 @@
 import math
 from typing import Callable, Iterable
 
-# Basic Mathematical Operations
+# Task 0.1: Basic Mathematical Operations
 def mul(x: float, y: float) -> float:
     return x * y
 
@@ -37,7 +37,7 @@ def sigmoid(x: float) -> float:
 def relu(x: float) -> float:
     return max(0.0, x)
 
-# Constants and Additional Functions
+# Additional functions for Task 0.1 continuation and backpropagation support
 EPS = 1e-6
 
 def log(x: float) -> float:
@@ -58,7 +58,7 @@ def inv_back(x: float, d: float) -> float:
 def relu_back(x: float, d: float) -> float:
     return d if x > 0 else 0.0
 
-# Higher-Order Functions for Iterable Manipulation
+# Task 0.3: Higher-Order Functions
 def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[float]]:
     def apply_map(ls: Iterable[float]) -> Iterable[float]:
         return [fn(x) for x in ls]
