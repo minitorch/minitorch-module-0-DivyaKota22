@@ -33,6 +33,7 @@ def sigmoid(x: float) -> float:
         z = math.exp(x)
         return z / (1 + z)
 
+
 def relu(x: float) -> float:
     return max(0.0, x)
 
@@ -57,22 +58,10 @@ def relu_back(x: float, d: float) -> float:
     return d if x > 0 else 0.0
 
 # Task 0.3 implementations
-
 def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[float]]:
     def apply_map(ls: Iterable[float]) -> Iterable[float]:
         return [fn(x) for x in ls]
     return apply_map
-
-def negList(ls: Iterable[float]) -> Iterable[float]:
-    return map(neg)(ls)
-
-def zipWith(fn: Callable[[float, float], float]) -> Callable[[Iterable[float], Iterable[float]], Iterable[float]]:
-    def apply_zipWith(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-        return [fn(x, y) for x, y in zip(ls1, ls2)]
-    return apply_zipWith
-
-def addLists(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-    return zipWith(add)(ls1, ls2)
 
 def reduce(fn: Callable[[float, float], float], start: float) -> Callable[[Iterable[float]], float]:
     def apply_reduce(ls: Iterable[float]) -> float:
@@ -82,8 +71,18 @@ def reduce(fn: Callable[[float, float], float], start: float) -> Callable[[Itera
         return result
     return apply_reduce
 
+def zipWith(fn: Callable[[float, float], float]) -> Callable[[Iterable[float], Iterable[float]], Iterable[float]]:
+    def apply_zipWith(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
+        return [fn(x, y) for x, y in zip(ls1, ls2)]
+    return apply_zipWith
+
+
+def negList(ls: Iterable[float]) -> Iterable[float]:
+    return map(neg)(ls)
+
+def addLists(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
+    return zipWith(add)(ls1, ls2)
 def sum(ls: Iterable[float]) -> float:
     return reduce(add, 0.0)(ls)
-
 def prod(ls: Iterable[float]) -> float:
     return reduce(mul, 1.0)(ls)
