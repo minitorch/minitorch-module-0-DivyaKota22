@@ -6,6 +6,14 @@ from interface.train import render_train_interface
 from math_interface import render_math_sandbox
 from run_torch import TorchTrain
 
+# Define a function to display the AI image
+def display_ai_image():
+    st.title("AI Image Display")
+    # Direct image URL for the AI image
+    image_url = "https://home.sophos.com/sites/default/files/2021-09/ai-article-pic8.jpeg"
+    st.image(image_url, caption="AI in Deep Learning", width=500)
+
+
 parser = ArgumentParser()
 parser.add_argument("module_num", type=int)
 parser.add_argument(
