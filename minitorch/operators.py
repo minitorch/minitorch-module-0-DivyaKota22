@@ -33,7 +33,6 @@ def sigmoid(x: float) -> float:
         z = math.exp(x)
         return z / (1 + z)
 
-
 def relu(x: float) -> float:
     return max(0.0, x)
 
@@ -57,7 +56,7 @@ def inv_back(x: float, d: float) -> float:
 def relu_back(x: float, d: float) -> float:
     return d if x > 0 else 0.0
 
-# Task 0.3 implementations
+# Task 0.3 Higher-Order Functions Implementation
 def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[float]]:
     def apply_map(ls: Iterable[float]) -> Iterable[float]:
         return [fn(x) for x in ls]
@@ -76,13 +75,14 @@ def zipWith(fn: Callable[[float, float], float]) -> Callable[[Iterable[float], I
         return [fn(x, y) for x, y in zip(ls1, ls2)]
     return apply_zipWith
 
-
 def negList(ls: Iterable[float]) -> Iterable[float]:
     return map(neg)(ls)
 
 def addLists(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
     return zipWith(add)(ls1, ls2)
+
 def sum(ls: Iterable[float]) -> float:
     return reduce(add, 0.0)(ls)
+
 def prod(ls: Iterable[float]) -> float:
     return reduce(mul, 1.0)(ls)
