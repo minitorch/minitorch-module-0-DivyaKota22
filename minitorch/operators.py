@@ -1,8 +1,3 @@
-import math
-from typing import Callable, Iterable
-
-# Implementation of elementary functions for deep learning tasks.
-
 def mul(x: float, y: float) -> float:
     """Multiply two numbers."""
     return x * y
@@ -37,67 +32,47 @@ def is_close(x: float, y: float) -> float:
 
 def sigmoid(x: float) -> float:
     """Sigmoid function."""
-    if x >= 0:
-        return 1.0 / (1.0 + math.exp(-x))
-    else:
-        z = math.exp(x)
-        return z / (1.0 + z)
+    return 1.0 / (1.0 + math.exp(-x))
 
 def relu(x: float) -> float:
     """ReLU function."""
-    return max(x, 0.0)
+    return x if x > 0 else 0.0
 
-def log_back(x: float, d: float) -> float:
-    """Backward pass for the log function."""
-    return d / (x + EPS)
-
-def inv(x: float) -> float:
-    """Inverse function."""
-    return 1.0 / x
-
-def inv_back(x: float, d: float) -> float:
-    """Backward pass for the inverse function."""
-    return -d / (x**2)
-
-def relu_back(x: float, d: float) -> float:
-    """Backward pass for the ReLU function."""
-    return d if x > 0 else 0.0
-
-# Task 0.3 implementations
-
+# Remaining functions (log_back, inv, inv_back, relu_back) assume knowledge of derivatives.
+#0.3
 def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[float]]:
-    """Higher-order map function."""
-    def mapped(ls):
+    """Applies a function to each element in the iterable."""
+    def apply_map(ls: Iterable[float]) -> Iterable[float]:
         return [fn(x) for x in ls]
-    return mapped
+    return apply_map
 
 def negList(ls: Iterable[float]) -> Iterable[float]:
-    """Negate a list of numbers."""
+    """Negate each element in the list."""
     return map(neg)(ls)
 
 def zipWith(fn: Callable[[float, float], float]) -> Callable[[Iterable[float], Iterable[float]], Iterable[float]]:
-    """Higher-order zipwith (map2) function."""
-    def zipped(ls1, ls2):
+    """Applies a function to pairs of elements from two lists."""
+    def apply_zipWith(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
         return [fn(x, y) for x, y in zip(ls1, ls2)]
-    return zipped
+    return apply_zipWith
 
 def addLists(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-    """Add two lists element-wise."""
+    """Add corresponding elements of two lists."""
     return zipWith(add)(ls1, ls2)
 
 def reduce(fn: Callable[[float, float], float], start: float) -> Callable[[Iterable[float]], float]:
-    """Higher-order reduce function."""
-    def reduced(ls):
+    """Reduce the list to a single value by recursively applying a function."""
+    def apply_reduce(ls: Iterable[float]) -> float:
         result = start
         for x in ls:
             result = fn(result, x)
         return result
-    return reduced
+    return apply_reduce
 
 def sum(ls: Iterable[float]) -> float:
-    """Sum up a list."""
+    """Sum all elements of the list."""
     return reduce(add, 0.0)(ls)
 
 def prod(ls: Iterable[float]) -> float:
-    """Product of a list."""
+    """Multiply all elements of the list."""
     return reduce(mul, 1.0)(ls)
