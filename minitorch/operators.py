@@ -1,90 +1,234 @@
-import math
-from typing import Callable, Iterable
+from typing import Callable, List, Tuple
 
-# Task 0.1: Basic Mathematical Operations
-def mul(x: float, y: float) -> float:
-    return x * y
+import pytest
+from hypothesis import given
+from hypothesis.strategies import lists
 
-def id(x: float) -> float:
-    return x
+from minitorch import MathTest
+from minitorch.operators import (
+    add,
+    addLists,
+    eq,
+    id,
+    inv,
+    inv_back,
+    log_back,
+    lt,
+    max,
+    mul,
+    neg,
+    negList,
+    prod,
+    relu,
+    relu_back,
+    sigmoid,
+    sum,
+)
 
-def add(x: float, y: float) -> float:
-    return x + y
+from .strategies import assert_close, small_floats
 
-def neg(x: float) -> float:
-    return -x
+# ## Task 0.1 Basic hypothesis tests.
 
-def lt(x: float, y: float) -> float:
-    return 1.0 if x < y else 0.0
 
-def eq(x: float, y: float) -> float:
-    return 1.0 if x == y else 0.0
+@pytest.mark.task0_1
+@given(small_floats, small_floats)
+def test_same_as_python(x: float, y: float) -> None:
+    "Check that the main operators all return the same value of the python version"
+    assert_close(mul(x, y), x * y)
+    assert_close(add(x, y), x + y)
+    assert_close(neg(x), -x)
+    assert_close(max(x, y), x if x > y else y)
+    if abs(x) > 1e-5:
+        assert_close(inv(x), 1.0 / x)
 
-def max(x: float, y: float) -> float:
-    return x if x > y else y
 
-def is_close(x: float, y: float) -> float:
-    return 1.0 if abs(x - y) < 1e-2 else 0.0
+@pytest.mark.task0_1
+@given(small_floats)
+def test_relu(a: float) -> None:
+    if a > 0:
+        assert relu(a) == a
+    if a < 0:
+        assert relu(a) == 0.0
 
-def sigmoid(x: float) -> float:
-    if x >= 0:
-        z = math.exp(-x)
-        return 1 / (1 + z)
+
+@pytest.mark.task0_1
+@given(small_floats, small_floats)
+def test_relu_back(a: float, b: float) -> None:
+    if a > 0:
+        assert relu_back(a, b) == b
+    if a < 0:
+        assert relu_back(a, b) == 0.0
+
+
+@pytest.mark.task0_1
+@given(small_floats)
+def test_id(a: float) -> None:
+    assert id(a) == a
+
+
+@pytest.mark.task0_1
+@given(small_floats)
+def test_lt(a: float) -> None:
+    "Check that a - 1.0 is always less than a"
+    assert lt(a - 1.0, a) == 1.0
+    assert lt(a, a - 1.0) == 0.0
+
+
+@pytest.mark.task0_1
+@given(small_floats)
+def test_max(a: float) -> None:
+    assert max(a - 1.0, a) == a
+    assert max(a, a - 1.0) == a
+    assert max(a + 1.0, a) == a + 1.0
+    assert max(a, a + 1.0) == a + 1.0
+
+
+@pytest.mark.task0_1
+@given(small_floats)
+def test_eq(a: float) -> None:
+    assert eq(a, a) == 1.0
+    assert eq(a, a - 1.0) == 0.0
+    assert eq(a, a + 1.0) == 0.0
+
+
+# ## Task 0.2 - Property Testing
+
+# Implement the following property checks
+# that ensure that your operators obey basic
+# mathematical rules.
+
+
+@pytest.mark.task0_2
+@given(small_floats)
+def test_sigmoid(a: float) -> None:
+    """Check properties of the sigmoid function, specifically
+    * It is always between 0.0 and 1.0.
+    * one minus sigmoid is the same as sigmoid of the negative
+    * It crosses 0 at 0.5
+    * It is  strictly increasing.
+    """
+    assert 0.0 <= sigmoid(a) <= 1.0, "Sigmoid function value should be between 0 and 1."
+    assert_close(sigmoid(a) + sigmoid(-a), 1.0)
+    assert_close(sigmoid(0.0), 0.5)
+    if -30.0 < a < 30.0:
+        assert sigmoid(a) < sigmoid(a + 1.0)
     else:
-        z = math.exp(x)
-        return z / (1 + z)
+        assert sigmoid(a) <= sigmoid(a + 1.0)
 
-def relu(x: float) -> float:
-    return max(0.0, x)
 
-# Additional functions for Task 0.1 continuation and backpropagation support
-EPS = 1e-6
+@pytest.mark.task0_2
+@given(small_floats, small_floats, small_floats)
+def test_transitive(a: float, b: float, c: float) -> None:
+    "Test the transitive property of less-than (a < b and b < c implies a < c)"
+    assert lt(a, b) + lt(b, c) <= lt(a, c) + 1.0
+    #raise NotImplementedError("Need to implement for Task 0.2")
 
-def log(x: float) -> float:
-    return math.log(x + EPS)
 
-def exp(x: float) -> float:
-    return math.exp(x)
+@pytest.mark.task0_2
+def test_symmetric() -> None:
+    """
+    Write a test that ensures that :func:minitorch.operators.mul is symmetric, i.e.
+    gives the same value regardless of the order of its input.
+    """
+    assert mul(2, 3) == mul(3, 2)
+    #raise NotImplementedError("Need to implement for Task 0.2")
 
-def log_back(x: float, d: float) -> float:
-    return d / (x + EPS)
 
-def inv(x: float) -> float:
-    return 1.0 / x
 
-def inv_back(x: float, d: float) -> float:
-    return -d / (x * x)
+@pytest.mark.task0_2
+def test_distribute() -> None:
+    """
+    Write a test that ensures that your operators distribute, i.e.
+    :math:z \times (x + y) = z \times x + z \times y
+    """
+    assert mul(2, add(3, 4)) == add(mul(2, 3), mul(2, 4))
+    #raise NotImplementedError("Need to implement for Task 0.2")
 
-def relu_back(x: float, d: float) -> float:
-    return d if x > 0 else 0.0
+@pytest.mark.task0_2
+def test_other() -> None:
+    """
+    Write a test that ensures some other property holds for your functions.
+    """
+    assert add(2, 3) == add(3, 2)
+    #raise NotImplementedError("Need to implement for Task 0.2")
 
-# Task 0.3: Higher-Order Functions
-def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[float]]:
-    def apply_map(ls: Iterable[float]) -> Iterable[float]:
-        return [fn(x) for x in ls]
-    return apply_map
 
-def reduce(fn: Callable[[float, float], float], start: float) -> Callable[[Iterable[float]], float]:
-    def apply_reduce(ls: Iterable[float]) -> float:
-        result = start
-        for x in ls:
-            result = fn(result, x)
-        return result
-    return apply_reduce
 
-def zipWith(fn: Callable[[float, float], float]) -> Callable[[Iterable[float], Iterable[float]], Iterable[float]]:
-    def apply_zipWith(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-        return [fn(x, y) for x, y in zip(ls1, ls2)]
-    return apply_zipWith
+# ## Task 0.3  - Higher-order functions
 
-def negList(ls: Iterable[float]) -> Iterable[float]:
-    return map(neg)(ls)
+# These tests check that your higher-order functions obey basic
+# properties.
 
-def addLists(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-    return zipWith(add)(ls1, ls2)
 
-def sum(ls: Iterable[float]) -> float:
-    return reduce(add, 0.0)(ls)
+@pytest.mark.task0_3
+@given(small_floats, small_floats, small_floats, small_floats)
+def test_zip_with(a: float, b: float, c: float, d: float) -> None:
+    x1, x2 = addLists([a, b], [c, d])
+    y1, y2 = a + c, b + d
+    assert_close(x1, y1)
+    assert_close(x2, y2)
 
-def prod(ls: Iterable[float]) -> float:
-    return reduce(mul, 1.0)(ls)
+
+@pytest.mark.task0_3
+@given(
+    lists(small_floats, min_size=5, max_size=5),
+    lists(small_floats, min_size=5, max_size=5),
+)
+def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
+    """
+    Write a test that ensures that the sum of ls1 plus the sum of ls2
+    is the same as the sum of each element of ls1 plus each element of ls2.
+    """
+    assert_close(sum(ls1) + sum(ls2), sum(addLists(ls1, ls2)))
+    #raise NotImplementedError("Need to implement for Task 0.3")
+
+
+@pytest.mark.task0_3
+@given(lists(small_floats))
+def test_sum(ls: List[float]) -> None:
+    assert_close(sum(ls), sum(ls))
+
+
+@pytest.mark.task0_3
+@given(small_floats, small_floats, small_floats)
+def test_prod(x: float, y: float, z: float) -> None:
+    assert_close(prod([x, y, z]), x * y * z)
+
+
+@pytest.mark.task0_3
+@given(lists(small_floats))
+def test_negList(ls: List[float]) -> None:
+    check = negList(ls)
+    for i, j in zip(ls, check):
+        assert_close(i, -j)
+
+
+# ## Generic mathematical tests
+
+# For each unit this generic set of mathematical tests will run.
+
+
+one_arg, two_arg, _ = MathTest._tests()
+
+
+@given(small_floats)
+@pytest.mark.parametrize("fn", one_arg)
+def test_one_args(fn: Tuple[str, Callable[[float], float]], t1: float) -> None:
+    name, base_fn = fn
+    base_fn(t1)
+
+
+@given(small_floats, small_floats)
+@pytest.mark.parametrize("fn", two_arg)
+def test_two_args(
+    fn: Tuple[str, Callable[[float, float], float]], t1: float, t2: float
+) -> None:
+    name, base_fn = fn
+    base_fn(t1, t2)
+
+
+@given(small_floats, small_floats)
+def test_backs(a: float, b: float) -> None:
+    relu_back(a, b)
+    inv_back(a + 2.4, b)
+    log_back(abs(a) + 4, b)
